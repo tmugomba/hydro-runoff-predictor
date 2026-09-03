@@ -1,0 +1,21 @@
+# virtual environment
+venv/
+.venv/
+
+# python caches
+__pycache__/
+*.pyc
+
+# jupyter checkpoints
+.ipynb_checkpoints/
+
+# large raw data pulls (keep the fetch scripts, not the data itself, out of git)
+data/raw/*.csv
+data/processed/*.csv
+
+# streamlit
+.streamlit/secrets.toml
+
+# os/editor junk
+.DS_Store
+.vscode/
