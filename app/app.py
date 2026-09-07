@@ -185,14 +185,13 @@ st.sidebar.markdown(
 # Hero
 # ----------------------------------------------------------------------------------------
 
-st.markdown(
+st.html(
     """
 <div class="hero-block">
   <div class="hero-title">Mersey River Run-of-River Dashboard</div>
   <div class="hero-sub">Discharge forecasting &amp; power estimation for Nova Scotia's Mersey Hydro System, built on 25 years of WSC gauge data.</div>
 </div>
-""",
-    unsafe_allow_html=True,
+"""
 )
 
 
@@ -217,31 +216,28 @@ flow_percentile = (discharge_df["discharge_cms"] <= today_discharge).mean() * 10
 # Gauges
 # ----------------------------------------------------------------------------------------
 
-st.markdown(f'<div class="section-label">Conditions on {selected_ts.date()}</div>', unsafe_allow_html=True)
+st.html(f'<div class="section-label">Conditions on {selected_ts.date()}</div>')
 g1, g2, g3 = st.columns(3)
 
 discharge_scale_max = float(discharge_df["discharge_cms"].quantile(0.99))
 with g1:
-    st.markdown('<div class="card gauge-card">', unsafe_allow_html=True)
-    st.markdown(
-        speedometer_svg(today_discharge, 0, discharge_scale_max, "DISCHARGE", "m3/s", color="#22d3ee"),
-        unsafe_allow_html=True,
+    st.html(
+        f'<div class="card gauge-card">'
+        f'{speedometer_svg(today_discharge, 0, discharge_scale_max, "DISCHARGE", "m3/s", color="#22d3ee")}'
+        f'</div>'
     )
-    st.markdown('</div>', unsafe_allow_html=True)
 with g2:
-    st.markdown('<div class="card gauge-card">', unsafe_allow_html=True)
-    st.markdown(
-        speedometer_svg(today_power, 0, MERSEY_SYSTEM_RATED_CAPACITY_MW, "POWER OUTPUT", "MW", color="#f5a623"),
-        unsafe_allow_html=True,
+    st.html(
+        f'<div class="card gauge-card">'
+        f'{speedometer_svg(today_power, 0, MERSEY_SYSTEM_RATED_CAPACITY_MW, "POWER OUTPUT", "MW", color="#f5a623")}'
+        f'</div>'
     )
-    st.markdown('</div>', unsafe_allow_html=True)
 with g3:
-    st.markdown('<div class="card gauge-card">', unsafe_allow_html=True)
-    st.markdown(
-        speedometer_svg(today_cf * 100, 0, 100, "CAPACITY FACTOR", "%", value_fmt="{:.0f}", color="#22d3ee"),
-        unsafe_allow_html=True,
+    st.html(
+        f'<div class="card gauge-card">'
+        f'{speedometer_svg(today_cf * 100, 0, 100, "CAPACITY FACTOR", "%", value_fmt="{{:.0f}}", color="#22d3ee")}'
+        f'</div>'
     )
-    st.markdown('</div>', unsafe_allow_html=True)
 
 st.caption(
     f"Today's flow sits at the {flow_percentile:.0f}th percentile of the full 1954-1979 record "
@@ -253,42 +249,50 @@ st.caption(
 # Animated schematic
 # ----------------------------------------------------------------------------------------
 
-st.markdown(schematic_svg(today_power, MERSEY_SYSTEM_RATED_CAPACITY_MW), unsafe_allow_html=True)
+st.html(schematic_svg(today_power, MERSEY_SYSTEM_RATED_CAPACITY_MW))
 
 
 # ----------------------------------------------------------------------------------------
 # Next-day forecast
 # ----------------------------------------------------------------------------------------
 
-st.markdown('<div class="section-label">Next-day discharge forecast</div>', unsafe_allow_html=True)
+st.html('<div class="section-label">Next-day discharge forecast</div>')
 f1, f2, f3 = st.columns(3)
 with f1:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown(f'<div class="card-title">Naive baseline{tooltip("Tomorrow = today. River discharge is highly autocorrelated day-to-day, making this a surprisingly strong baseline.")}</div>', unsafe_allow_html=True)
-    st.markdown(f'<span class="mono" style="font-size:1.7rem;color:#e8ecf3;">{naive_forecast:.1f}</span> <span style="color:#8a93a6;">m3/s</span>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.html(
+        f'<div class="card">'
+        f'<div class="card-title">Naive baseline{tooltip("Tomorrow = today. River discharge is highly autocorrelated day-to-day, making this a surprisingly strong baseline.")}</div>'
+        f'<span class="mono" style="font-size:1.7rem;color:#e8ecf3;">{naive_forecast:.1f}</span> <span style="color:#8a93a6;">m3/s</span>'
+        f'</div>'
+    )
 with f2:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown(f'<div class="card-title">XGBoost forecast{tooltip("Gradient-boosted trees trained on lags, rolling stats, and seasonal encoding. See Model Performance below for when this does and doesn\'t beat the baseline.")}</div>', unsafe_allow_html=True)
-    st.markdown(f'<span class="mono" style="font-size:1.7rem;color:#f5a623;">{xgb_forecast:.1f}</span> <span style="color:#8a93a6;">m3/s</span>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.html(
+        f'<div class="card">'
+        f'<div class="card-title">XGBoost forecast{tooltip("Gradient-boosted trees trained on lags, rolling stats, and seasonal encoding. See Model Performance below for when this does and doesn\'t beat the baseline.")}</div>'
+        f'<span class="mono" style="font-size:1.7rem;color:#f5a623;">{xgb_forecast:.1f}</span> <span style="color:#8a93a6;">m3/s</span>'
+        f'</div>'
+    )
 with f3:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown(f'<div class="card-title">Actual next day</div>', unsafe_allow_html=True)
-    st.markdown(f'<span class="mono" style="font-size:1.7rem;color:#22d3ee;">{actual_next_day:.1f}</span> <span style="color:#8a93a6;">m3/s</span>', unsafe_allow_html=True)
     naive_err = abs(naive_forecast - actual_next_day)
     xgb_err = abs(xgb_forecast - actual_next_day)
     winner = "XGBoost" if xgb_err < naive_err else "Naive baseline"
-    st.caption(f"Closer on this day: **{winner}** (baseline off by {naive_err:.1f}, XGBoost off by {xgb_err:.1f} m3/s)")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.html(
+        f'<div class="card">'
+        f'<div class="card-title">Actual next day</div>'
+        f'<span class="mono" style="font-size:1.7rem;color:#22d3ee;">{actual_next_day:.1f}</span> <span style="color:#8a93a6;">m3/s</span>'
+        f'<div style="margin-top:0.5rem;color:#8a93a6;font-size:0.85rem;">'
+        f'Closer on this day: <b style="color:#e8ecf3;">{winner}</b> '
+        f'(baseline off by {naive_err:.1f}, XGBoost off by {xgb_err:.1f} m3/s)'
+        f'</div>'
+        f'</div>'
+    )
 
 
 # ----------------------------------------------------------------------------------------
 # Flow-duration curve
 # ----------------------------------------------------------------------------------------
 
-st.markdown('<div class="section-label">Flow-duration curve</div>', unsafe_allow_html=True)
-st.markdown('<div class="card">', unsafe_allow_html=True)
+st.html('<div class="section-label">Flow-duration curve</div>')
 
 sorted_flow = discharge_df["discharge_cms"].sort_values(ascending=False).reset_index(drop=True)
 exceedance_pct = (sorted_flow.index + 1) / len(sorted_flow) * 100
@@ -317,40 +321,45 @@ fdc_fig.update_layout(
     margin=dict(l=10, r=10, t=30, b=10),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
 )
-st.plotly_chart(fdc_fig, width="stretch")
-st.caption(
-    "Log y-axis, since discharge spans two orders of magnitude between drought and flood. "
-    "The design flow line marks where the power conversion is calibrated to hit rated capacity."
-)
-st.markdown('</div>', unsafe_allow_html=True)
+
+# st.container(border=True) instead of a manual div -- this section wraps a NATIVE
+# Streamlit widget (st.plotly_chart), and a hand-written <div> opened here can't
+# actually contain a separately-rendered widget call; Streamlit renders each st.*
+# call as its own independent DOM fragment, so a raw opening/closing div pair split
+# across calls like that never nests the widget inside it, it just leaves an empty,
+# collapsed div sitting next to the real (unstyled) content
+with st.container(border=True):
+    st.plotly_chart(fdc_fig, width="stretch")
+    st.caption(
+        "Log y-axis, since discharge spans two orders of magnitude between drought and flood. "
+        "The design flow line marks where the power conversion is calibrated to hit rated capacity."
+    )
 
 
 # ----------------------------------------------------------------------------------------
 # Model performance
 # ----------------------------------------------------------------------------------------
 
-st.markdown('<div class="section-label">Model performance</div>', unsafe_allow_html=True)
+st.html('<div class="section-label">Model performance</div>')
 single_split, cv_df = compute_performance(feature_df)
 
 p1, p2 = st.columns([1, 1])
 with p1:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown(f'<div class="card-title">Single 80/20 chronological split{tooltip("This split happens to place the worst flood in the record (Jan 1978) entirely in the test set -- see the cross-validation panel for whether that one split is representative.")}</div>', unsafe_allow_html=True)
-    st.dataframe(single_split.style.format({"MAE (m3/s)": "{:.2f}", "RMSE (m3/s)": "{:.2f}", "R2": "{:.3f}"}), width="stretch", hide_index=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.html(f'<div class="card-title">Single 80/20 chronological split{tooltip("This split happens to place the worst flood in the record (Jan 1978) entirely in the test set -- see the cross-validation panel for whether that one split is representative.")}</div>')
+        st.dataframe(single_split.style.format({"MAE (m3/s)": "{:.2f}", "RMSE (m3/s)": "{:.2f}", "R2": "{:.3f}"}), width="stretch", hide_index=True)
 with p2:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown(f'<div class="card-title">5-fold time series cross-validation{tooltip("Expanding-window folds across the full record, so the single-split result above is checked against several different multi-year test windows.")}</div>', unsafe_allow_html=True)
-    wins = int(cv_df["XGBoost wins"].sum())
-    st.markdown(f'<span class="mono" style="font-size:1.5rem;color:#e8ecf3;">{wins} / {len(cv_df)}</span> <span style="color:#8a93a6;">folds where XGBoost beat the naive baseline on MAE</span>', unsafe_allow_html=True)
-    st.dataframe(
-        cv_df[["Fold", "Test window", "Baseline MAE", "XGBoost MAE", "XGBoost wins"]]
-        .style.format({"Baseline MAE": "{:.2f}", "XGBoost MAE": "{:.2f}"}),
-        width="stretch", hide_index=True,
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.html(f'<div class="card-title">5-fold time series cross-validation{tooltip("Expanding-window folds across the full record, so the single-split result above is checked against several different multi-year test windows.")}</div>')
+        wins = int(cv_df["XGBoost wins"].sum())
+        st.html(f'<span class="mono" style="font-size:1.5rem;color:#e8ecf3;">{wins} / {len(cv_df)}</span> <span style="color:#8a93a6;">folds where XGBoost beat the naive baseline on MAE</span>')
+        st.dataframe(
+            cv_df[["Fold", "Test window", "Baseline MAE", "XGBoost MAE", "XGBoost wins"]]
+            .style.format({"Baseline MAE": "{:.2f}", "XGBoost MAE": "{:.2f}"}),
+            width="stretch", hide_index=True,
+        )
 
-st.markdown(
+st.html(
     """
 <div class="callout">
 <b>Honest finding:</b> the naive "tomorrow = today" persistence baseline generally matches or beats
@@ -360,8 +369,7 @@ extrapolate past the range of values it was trained on, while persistence just t
 river is actually doing. This is documented rather than hidden, the same approach used for the
 SARIMAX-vs-XGBoost writeup on the Load Forecasting project.
 </div>
-""",
-    unsafe_allow_html=True,
+"""
 )
 
 
@@ -369,8 +377,7 @@ SARIMAX-vs-XGBoost writeup on the Load Forecasting project.
 # Station map
 # ----------------------------------------------------------------------------------------
 
-st.markdown('<div class="section-label">Station location</div>', unsafe_allow_html=True)
-st.markdown('<div class="card">', unsafe_allow_html=True)
+st.html('<div class="section-label">Station location</div>')
 # plotly >=6 renamed the mapbox-based trace/layout to "map" (built on MapLibre, no token
 # needed, same free "carto-darkmatter" basemap style)
 map_fig = go.Figure(go.Scattermap(
@@ -386,17 +393,17 @@ map_fig.update_layout(
     height=340,
     paper_bgcolor="rgba(0,0,0,0)",
 )
-st.plotly_chart(map_fig, width="stretch")
-st.caption("Queens County, Nova Scotia -- same stretch of river as the real Mersey Hydro System's six powerhouses.")
-st.markdown('</div>', unsafe_allow_html=True)
+with st.container(border=True):
+    st.plotly_chart(map_fig, width="stretch")
+    st.caption("Queens County, Nova Scotia -- same stretch of river as the real Mersey Hydro System's six powerhouses.")
 
 
 # ----------------------------------------------------------------------------------------
 # Limitations / about
 # ----------------------------------------------------------------------------------------
 
-st.markdown('<div class="section-label">About the power conversion</div>', unsafe_allow_html=True)
-st.markdown(
+st.html('<div class="section-label">About the power conversion</div>')
+st.html(
     f"""
 <div class="callout">
 The real Mersey Hydro System is <b>six separate powerhouses</b> fed by six reservoirs and nine dams,
@@ -409,8 +416,7 @@ flow and storage from a watershed only partly reflected in this one downstream g
 This is a defensible approximation for a portfolio-level feasibility tool, not a substitute for an
 engineering study of the real six-powerhouse system.
 </div>
-""",
-    unsafe_allow_html=True,
+"""
 )
 
 
@@ -418,13 +424,12 @@ engineering study of the real six-powerhouse system.
 # Footer
 # ----------------------------------------------------------------------------------------
 
-st.markdown(
+st.html(
     """
 <div class="footer-block">
 Built by Tendekai Mugomba &nbsp;|&nbsp;
 <a href="https://www.linkedin.com/in/tendekai-mugomba" target="_blank">LinkedIn</a> &nbsp;|&nbsp;
 <a href="https://github.com/tmugomba" target="_blank">GitHub</a>
 </div>
-""",
-    unsafe_allow_html=True,
+"""
 )
