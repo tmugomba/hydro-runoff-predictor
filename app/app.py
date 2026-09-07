@@ -55,7 +55,10 @@ st.set_page_config(
     page_icon="\U0001F4A7",
     layout="wide",
 )
-st.markdown(CSS, unsafe_allow_html=True)
+# st.html() (not st.markdown) for raw CSS/HTML injection -- markdown parsing can
+# occasionally mangle or literally display a <style> block instead of applying it;
+# st.html() renders the string as-is, with no markdown interpretation in the way
+st.html(CSS)
 
 
 # ----------------------------------------------------------------------------------------
