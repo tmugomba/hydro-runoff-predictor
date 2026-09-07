@@ -4,6 +4,8 @@ headers, JetBrains Mono for numerals, consistent with the Wind Calculator / Sola
 Dashboard / Grid Explorer design language used across the rest of the portfolio.
 """
 
+import base64
+
 CSS = """
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -182,3 +184,23 @@ p, li, span, div, label {
 def tooltip(text: str) -> str:
     """Small inline hover-glow 'i' tooltip, e.g. next to a metric label."""
     return f'<span class="tip">i<span class="tip-bubble">{text}</span></span>'
+
+
+def svg_img(svg_str: str, css_class: str = "") -> str:
+    """
+    Wrap a raw <svg>...</svg> string as a base64 data-URI <img> tag instead of injecting
+    the SVG markup directly.
+
+    Streamlit's st.html() (and st.markdown with unsafe_allow_html) sanitize HTML with
+    DOMPurify, which by default does NOT allow raw <svg> elements through unless the
+    SVG profile is explicitly enabled -- in practice this silently strips the whole
+    <svg> subtree, leaving only its parent <div> (still styled, so it shows up as an
+    empty card instead of an error). Encoding the SVG as an <img src="data:image/svg+xml;
+    base64,...">  sidesteps that entirely: DOMPurify sees a plain <img> tag with a data
+    URI, which is standard and always allowed, and the browser decodes/renders the SVG
+    (including embedded SMIL animations and CSS @keyframes) as an image regardless of
+    the sanitizer's SVG element policy.
+    """
+    b64 = base64.b64encode(svg_str.encode("utf-8")).decode("ascii")
+    cls = f' class="{css_class}"' if css_class else ""
+    return f'<img{cls} src="data:image/svg+xml;base64,{b64}" style="width:100%;height:auto;display:block;">'

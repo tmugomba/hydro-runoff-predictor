@@ -1,12 +1,20 @@
 """
 Animated run-of-river schematic: reservoir -> canal/penstock -> powerhouse -> grid.
 
-Two animation techniques, both native SVG/CSS (no JS needed, so this renders fine inside
-Streamlit's st.markdown(unsafe_allow_html=True)):
+Two animation techniques, both native SVG/CSS:
   - Flow particles: SVG SMIL <animateMotion> tracing a <path>, staggered begin offsets so
     several dots appear strung along the water route at once.
   - Turbine glow pulse: a CSS @keyframes opacity/filter pulse on the powerhouse turbine
     circle, suggesting continuous generation.
+
+This returns a single self-contained <svg>...</svg> string with NO outer <div>/<style>
+siblings -- the <style> block lives INSIDE the <svg> as a valid SVG child element. That
+matters because this SVG gets base64-encoded and embedded as an <img> by theme.svg_img()
+(see that function's docstring for why: Streamlit's HTML sanitizer strips raw inline
+<svg> markup by default, but leaves a base64 data-URI <img> alone). For the data-URI
+image to work, the SVG has to be a fully self-contained document -- nothing living
+outside its own <svg> tag. Both SMIL animateMotion and CSS @keyframes still animate
+normally inside an <img>-embedded SVG in modern browsers.
 """
 
 WATER_PATH_D = "M 40,70 C 140,70 160,150 260,150 C 340,150 360,110 430,110"
@@ -32,16 +40,15 @@ def schematic_svg(active_power_mw: float, rated_capacity_mw: float) -> str:
     </circle>"""
 
     return f"""
-<div class="schematic-wrap">
-<style>
-@keyframes turbine-pulse {{
-  0%   {{ filter: drop-shadow(0 0 2px #f5a623); opacity: 0.85; }}
-  50%  {{ filter: drop-shadow(0 0 10px #f5a623); opacity: 1; }}
-  100% {{ filter: drop-shadow(0 0 2px #f5a623); opacity: 0.85; }}
-}}
-.turbine-core {{ animation: turbine-pulse 1.8s ease-in-out infinite; transform-origin: 260px 150px; }}
-</style>
 <svg viewBox="0 0 490 220" xmlns="http://www.w3.org/2000/svg" class="schematic-svg">
+  <style>
+    @keyframes turbine-pulse {{
+      0%   {{ filter: drop-shadow(0 0 2px #f5a623); opacity: 0.85; }}
+      50%  {{ filter: drop-shadow(0 0 10px #f5a623); opacity: 1; }}
+      100% {{ filter: drop-shadow(0 0 2px #f5a623); opacity: 0.85; }}
+    }}
+    .turbine-core {{ animation: turbine-pulse 1.8s ease-in-out infinite; transform-origin: 260px 150px; }}
+  </style>
   <defs>
     <filter id="particle-glow" x="-200%" y="-200%" width="500%" height="500%">
       <feGaussianBlur stdDeviation="2.2" result="b"/>
@@ -95,5 +102,4 @@ def schematic_svg(active_power_mw: float, rated_capacity_mw: float) -> str:
           fill="#5a6684" text-anchor="middle">Nova Scotia Power</text>
   </g>
 </svg>
-</div>
 """.strip()

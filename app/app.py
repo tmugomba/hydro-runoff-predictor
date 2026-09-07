@@ -42,7 +42,7 @@ from src.power import (
     MERSEY_SYSTEM_RATED_CAPACITY_MW,
     DESIGN_FLOW_QUANTILE,
 )
-from theme import CSS, tooltip
+from theme import CSS, tooltip, svg_img
 from gauges import speedometer_svg
 from schematic import schematic_svg
 
@@ -223,19 +223,19 @@ discharge_scale_max = float(discharge_df["discharge_cms"].quantile(0.99))
 with g1:
     st.html(
         f'<div class="card gauge-card">'
-        f'{speedometer_svg(today_discharge, 0, discharge_scale_max, "DISCHARGE", "m3/s", color="#22d3ee")}'
+        f'{svg_img(speedometer_svg(today_discharge, 0, discharge_scale_max, "DISCHARGE", "m3/s", color="#22d3ee"))}'
         f'</div>'
     )
 with g2:
     st.html(
         f'<div class="card gauge-card">'
-        f'{speedometer_svg(today_power, 0, MERSEY_SYSTEM_RATED_CAPACITY_MW, "POWER OUTPUT", "MW", color="#f5a623")}'
+        f'{svg_img(speedometer_svg(today_power, 0, MERSEY_SYSTEM_RATED_CAPACITY_MW, "POWER OUTPUT", "MW", color="#f5a623"))}'
         f'</div>'
     )
 with g3:
     st.html(
         f'<div class="card gauge-card">'
-        f'{speedometer_svg(today_cf * 100, 0, 100, "CAPACITY FACTOR", "%", value_fmt="{{:.0f}}", color="#22d3ee")}'
+        f'{svg_img(speedometer_svg(today_cf * 100, 0, 100, "CAPACITY FACTOR", "%", value_fmt="{{:.0f}}", color="#22d3ee"))}'
         f'</div>'
     )
 
@@ -249,7 +249,7 @@ st.caption(
 # Animated schematic
 # ----------------------------------------------------------------------------------------
 
-st.html(schematic_svg(today_power, MERSEY_SYSTEM_RATED_CAPACITY_MW))
+st.html(f'<div class="schematic-wrap">{svg_img(schematic_svg(today_power, MERSEY_SYSTEM_RATED_CAPACITY_MW))}</div>')
 
 
 # ----------------------------------------------------------------------------------------
@@ -316,10 +316,19 @@ fdc_fig.update_layout(
     font=dict(family="Space Grotesk", color="#e8ecf3"),
     xaxis_title="% of time flow is exceeded",
     yaxis_title="discharge (m3/s)",
-    yaxis_type="log",
     height=420,
     margin=dict(l=10, r=10, t=30, b=10),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+)
+# Plotly's autorange for a log-scale axis combined with add_hline() has a known bug
+# where the computed range can balloon to an absurd exponent (e.g. 10^105), squashing
+# the real data into a flat sliver at the bottom of the chart. Setting the log-scale
+# range explicitly sidesteps that broken autorange entirely.
+y_min = discharge_df["discharge_cms"].min()
+y_max = discharge_df["discharge_cms"].max()
+fdc_fig.update_yaxes(
+    type="log",
+    range=[math.log10(y_min * 0.85), math.log10(y_max * 1.15)],
 )
 
 # st.container(border=True) instead of a manual div -- this section wraps a NATIVE
