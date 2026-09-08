@@ -40,7 +40,7 @@ def schematic_svg(active_power_mw: float, rated_capacity_mw: float) -> str:
     </circle>"""
 
     return f"""
-<svg viewBox="0 0 490 220" xmlns="http://www.w3.org/2000/svg" class="schematic-svg">
+<svg viewBox="0 0 530 220" xmlns="http://www.w3.org/2000/svg" class="schematic-svg">
   <style>
     @keyframes turbine-pulse {{
       0%   {{ filter: drop-shadow(0 0 2px #f5a623); opacity: 0.85; }}

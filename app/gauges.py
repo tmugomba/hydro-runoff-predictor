@@ -52,7 +52,12 @@ def speedometer_svg(
     Build one semicircular speedometer gauge as a standalone SVG string.
 
     value, min_val, max_val : gauge reading and its scale bounds.
-    label : short caption shown under the value (e.g. "DISCHARGE").
+    label : used only to build a unique filter id internally (e.g. "DISCHARGE") --
+            no longer drawn inside the gauge itself. The caller (app.py) shows the
+            label as a proper HTML title row above the gauge instead, with a hover
+            tooltip explaining what the metric means. That row lives outside this
+            SVG because the SVG gets flattened into a base64 <img> (see theme.svg_img
+            for why), and CSS/hover interactions can't reach inside a flattened image.
     unit : unit string shown next to the value (e.g. "m3/s").
     value_fmt : format spec applied to `value` before display.
     color : accent color of the value arc + needle hub (amber for discharge/power,
@@ -61,8 +66,8 @@ def speedometer_svg(
     size : SVG viewBox width in px; height is size * 0.72.
     """
     width = size
-    height = int(size * 0.82)
-    cx, cy, r = width / 2, height * 0.80, width * 0.38
+    height = int(size * 0.95)
+    cx, cy, r = width / 2, height * 0.90, width * 0.36
 
     frac = 0.0 if max_val == min_val else (value - min_val) / (max_val - min_val)
     frac = max(0.0, min(1.0, frac))
@@ -105,13 +110,10 @@ def speedometer_svg(
   <line x1="{cx:.1f}" y1="{cy:.1f}" x2="{needle_x:.2f}" y2="{needle_y:.2f}"
         stroke="#e8ecf3" stroke-width="3" stroke-linecap="round"/>
   <circle cx="{cx:.1f}" cy="{cy:.1f}" r="{width*0.035:.1f}" fill="{color}" filter="url(#glow-{label})"/>
-  <text x="{cx:.1f}" y="{cy - height*0.30:.1f}" text-anchor="middle" class="gauge-value"
-        font-family="'JetBrains Mono', monospace" font-size="{width*0.135:.1f}" fill="#e8ecf3"
+  <text x="{cx:.1f}" y="{cy - height*0.22:.1f}" text-anchor="middle" class="gauge-value"
+        font-family="'JetBrains Mono', monospace" font-size="{width*0.115:.1f}" fill="#e8ecf3"
         font-weight="600">{value_text}</text>
-  <text x="{cx:.1f}" y="{cy - height*0.14:.1f}" text-anchor="middle" class="gauge-unit"
-        font-family="'JetBrains Mono', monospace" font-size="{width*0.055:.1f}" fill="#8a93a6">{unit}</text>
-  <text x="{cx:.1f}" y="{height*0.98:.1f}" text-anchor="middle" class="gauge-label"
-        font-family="'Space Grotesk', sans-serif" font-size="{width*0.062:.1f}" fill="#8a93a6"
-        letter-spacing="1.5">{label}</text>
+  <text x="{cx:.1f}" y="{cy - height*0.08:.1f}" text-anchor="middle" class="gauge-unit"
+        font-family="'JetBrains Mono', monospace" font-size="{width*0.048:.1f}" fill="#8a93a6">{unit}</text>
 </svg>
 """.strip()

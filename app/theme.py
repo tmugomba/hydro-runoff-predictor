@@ -115,6 +115,7 @@ p, li, span, div, label {
   font-size: 10px;
   font-family: 'JetBrains Mono', monospace;
   margin-left: 6px;
+  vertical-align: middle;
   cursor: help;
   position: relative;
   transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
@@ -136,6 +137,7 @@ p, li, span, div, label {
   color: var(--text-primary);
   font-size: 11.5px;
   font-family: 'Space Grotesk', sans-serif;
+  text-transform: none;
   padding: 8px 10px;
   border-radius: 8px;
   width: 210px;

@@ -220,28 +220,62 @@ st.html(f'<div class="section-label">Conditions on {selected_ts.date()}</div>')
 g1, g2, g3 = st.columns(3)
 
 discharge_scale_max = float(discharge_df["discharge_cms"].quantile(0.99))
+
+# tooltip text pulled out into plain variables (rather than inlined in the f-strings
+# below) so apostrophes/quotes in the explanations don't have to fight with Python's
+# string-escaping rules inside an already-nested f-string expression
+discharge_tip = (
+    "How much water is flowing past the gauge station right now, in cubic metres "
+    "per second (m3/s). More discharge means more water available to generate power."
+)
+power_tip = (
+    "Today's discharge converted to an estimated electricity output in megawatts "
+    "(MW), capped at the real system's 42.5 MW rated capacity -- see the power "
+    "conversion note further down the page for how this conversion works."
+)
+capacity_factor_tip = (
+    "Today's power output as a percentage of the plant's maximum possible output "
+    "(42.5 MW) if it ran flat-out, all day, every day. Real run-of-river hydro "
+    "typically sits around 40-60%, since flow varies with the season."
+)
+
 with g1:
     st.html(
         f'<div class="card gauge-card">'
+        f'<div class="card-title" style="text-align:center;">DISCHARGE{tooltip(discharge_tip)}</div>'
         f'{svg_img(speedometer_svg(today_discharge, 0, discharge_scale_max, "DISCHARGE", "m3/s", color="#22d3ee"))}'
         f'</div>'
     )
 with g2:
     st.html(
         f'<div class="card gauge-card">'
+        f'<div class="card-title" style="text-align:center;">POWER OUTPUT{tooltip(power_tip)}</div>'
         f'{svg_img(speedometer_svg(today_power, 0, MERSEY_SYSTEM_RATED_CAPACITY_MW, "POWER OUTPUT", "MW", color="#f5a623"))}'
         f'</div>'
     )
 with g3:
     st.html(
         f'<div class="card gauge-card">'
-        f'{svg_img(speedometer_svg(today_cf * 100, 0, 100, "CAPACITY FACTOR", "%", value_fmt="{{:.0f}}", color="#22d3ee"))}'
+        f'<div class="card-title" style="text-align:center;">CAPACITY FACTOR{tooltip(capacity_factor_tip)}</div>'
+        f'{svg_img(speedometer_svg(today_cf * 100, 0, 100, "CAPACITY FACTOR", "%", value_fmt="{:.0f}", color="#22d3ee"))}'
         f'</div>'
     )
 
-st.caption(
-    f"Today's flow sits at the {flow_percentile:.0f}th percentile of the full 1954-1979 record "
-    f"&nbsp;|&nbsp; whole-record average capacity factor: {overall_cf:.1%}"
+percentile_tip = (
+    f"Where today's flow ranks against every day in the full 1954-1979 record. "
+    f"The {flow_percentile:.0f}th percentile means only {100 - flow_percentile:.0f}% "
+    f"of days on record had higher flow than this."
+)
+avg_cf_tip = (
+    "The average of the capacity factor gauge above, taken across the entire "
+    "25-year historical record rather than just the selected day."
+)
+st.html(
+    f'<div style="color:#8a93a6;font-size:0.85rem;margin-top:0.3rem;">'
+    f'Today\'s flow sits at the {flow_percentile:.0f}th percentile{tooltip(percentile_tip)}'
+    f' of the full 1954-1979 record &nbsp;|&nbsp; '
+    f'whole-record average capacity factor: {overall_cf:.1%}{tooltip(avg_cf_tip)}'
+    f'</div>'
 )
 
 
@@ -292,7 +326,7 @@ with f3:
 # Flow-duration curve
 # ----------------------------------------------------------------------------------------
 
-st.html('<div class="section-label">Flow-duration curve</div>')
+st.html(f'<div class="section-label">Flow-duration curve{tooltip("A standard hydrology chart: it ranks every day on record from highest flow to lowest, then plots discharge against what percentage of the time that flow level is met or exceeded. Used to size hydropower systems against how reliably water is actually available.")}</div>')
 
 sorted_flow = discharge_df["discharge_cms"].sort_values(ascending=False).reset_index(drop=True)
 exceedance_pct = (sorted_flow.index + 1) / len(sorted_flow) * 100
@@ -371,12 +405,17 @@ with p2:
 st.html(
     """
 <div class="callout">
-<b>Honest finding:</b> the naive "tomorrow = today" persistence baseline generally matches or beats
-XGBoost overall, because river discharge is highly autocorrelated day-to-day. XGBoost's weak point
-is specifically flood events that exceed anything seen in training -- a tree-based model can't
-extrapolate past the range of values it was trained on, while persistence just tracks whatever the
-river is actually doing. This is documented rather than hidden, the same approach used for the
-SARIMAX-vs-XGBoost writeup on the Load Forecasting project.
+<b>Honest finding:</b> the naive "tomorrow = today" baseline usually matches or beats XGBoost
+overall. River discharge changes gradually day to day, so simply assuming tomorrow looks like
+today turns out to be a surprisingly strong forecast.
+<br><br>
+XGBoost's weakness shows up specifically during floods that exceed anything it saw in training.
+Tree-based models can't extrapolate beyond the range of values they learned from, so once a flood
+pushes discharge past that range, XGBoost gets it wrong while persistence just keeps tracking
+whatever the river is actually doing.
+<br><br>
+This result is documented here rather than hidden, the same approach taken with the
+SARIMAX-vs-XGBoost comparison on the Load Forecasting project.
 </div>
 """
 )
@@ -415,15 +454,19 @@ st.html('<div class="section-label">About the power conversion</div>')
 st.html(
     f"""
 <div class="callout">
-The real Mersey Hydro System is <b>six separate powerhouses</b> fed by six reservoirs and nine dams,
-not one turbine -- this dashboard treats it as a single lumped equivalent, calibrated so that a
-design flow (here, Q{int((1-DESIGN_FLOW_QUANTILE)*100)}, the flow exceeded only {(1-DESIGN_FLOW_QUANTILE)*100:.0f}% of the time) maps onto the real
-system's {MERSEY_SYSTEM_RATED_CAPACITY_MW} MW rated capacity. That design flow is much rarer than
-standard small-hydro sizing convention (typically Q20-Q40) -- a sign this simplification
-undercounts the real system's combined hydraulic capacity, since the actual powerhouses draw on
-flow and storage from a watershed only partly reflected in this one downstream gauge at Milton.
-This is a defensible approximation for a portfolio-level feasibility tool, not a substitute for an
-engineering study of the real six-powerhouse system.
+The real Mersey Hydro System is <b>six separate powerhouses</b>, not one turbine -- so this
+dashboard simplifies it down to a single "lumped" equivalent turbine for modeling purposes.
+<br><br>
+That model is calibrated using a <b>design flow</b>: a discharge level chosen so that a given
+percentage of days on record meet or exceed it, written as "Q" followed by that percentage.
+Q{int((1-DESIGN_FLOW_QUANTILE)*100)} means the flow that's met or exceeded {(1-DESIGN_FLOW_QUANTILE)*100:.0f}% of the time -- a rare, high-flow day. This
+dashboard calibrates so that Q{int((1-DESIGN_FLOW_QUANTILE)*100)} produces the real system's full {MERSEY_SYSTEM_RATED_CAPACITY_MW} MW rated output.
+<br><br>
+Standard small-hydro design instead uses a much more common flow, typically Q20-Q40 (met or
+exceeded 20-40% of the time). Needing a rarer flow like Q{int((1-DESIGN_FLOW_QUANTILE)*100)} here to hit a realistic 42.5 MW
+suggests this simplified model understates the real system's capacity -- likely because the
+six actual powerhouses draw on flow and storage from reservoirs across the watershed, only some
+of which passes this one downstream gauge at Milton.
 </div>
 """
 )
