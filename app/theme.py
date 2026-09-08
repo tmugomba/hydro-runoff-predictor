@@ -75,6 +75,8 @@ p, li, span, div, label {
   transform: translateY(-2px);
 }
 .card-title {
+  display: flex;
+  align-items: center;
   font-size: 0.78rem;
   letter-spacing: 1.2px;
   color: var(--text-muted);
@@ -114,8 +116,8 @@ p, li, span, div, label {
   color: var(--text-muted);
   font-size: 10px;
   font-family: 'JetBrains Mono', monospace;
+  text-transform: none;
   margin-left: 6px;
-  vertical-align: middle;
   cursor: help;
   position: relative;
   transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;

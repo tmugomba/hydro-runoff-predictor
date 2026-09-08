@@ -66,8 +66,8 @@ def speedometer_svg(
     size : SVG viewBox width in px; height is size * 0.72.
     """
     width = size
-    height = int(size * 0.95)
-    cx, cy, r = width / 2, height * 0.90, width * 0.36
+    height = int(size * 0.56)
+    cx, cy, r = width / 2, height * 0.92, width * 0.40
 
     frac = 0.0 if max_val == min_val else (value - min_val) / (max_val - min_val)
     frac = max(0.0, min(1.0, frac))
@@ -110,10 +110,10 @@ def speedometer_svg(
   <line x1="{cx:.1f}" y1="{cy:.1f}" x2="{needle_x:.2f}" y2="{needle_y:.2f}"
         stroke="#e8ecf3" stroke-width="3" stroke-linecap="round"/>
   <circle cx="{cx:.1f}" cy="{cy:.1f}" r="{width*0.035:.1f}" fill="{color}" filter="url(#glow-{label})"/>
-  <text x="{cx:.1f}" y="{cy - height*0.22:.1f}" text-anchor="middle" class="gauge-value"
+  <text x="{cx:.1f}" y="{cy - height*0.30:.1f}" text-anchor="middle" class="gauge-value"
         font-family="'JetBrains Mono', monospace" font-size="{width*0.115:.1f}" fill="#e8ecf3"
         font-weight="600">{value_text}</text>
-  <text x="{cx:.1f}" y="{cy - height*0.08:.1f}" text-anchor="middle" class="gauge-unit"
+  <text x="{cx:.1f}" y="{cy - height*0.12:.1f}" text-anchor="middle" class="gauge-unit"
         font-family="'JetBrains Mono', monospace" font-size="{width*0.048:.1f}" fill="#8a93a6">{unit}</text>
 </svg>
 """.strip()
